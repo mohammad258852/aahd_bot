@@ -53,9 +53,12 @@ func InitDatabase() error {
 	return err
 }
 
-func GetAhhdEventByDate(t time.Time) *AhhdEvent {
+func GetAhhdEventByDate(group *Group, t time.Time) *AhhdEvent {
 	var result AhhdEvent
-	db.First(&result, "date = ?", datatypes.Date(t))
+	res := db.First(&result, "date = ? AND groupId = ?", datatypes.Date(t), group.Id)
+	if res.Error != nil {
+		return nil
+	}
 	return &result
 }
 

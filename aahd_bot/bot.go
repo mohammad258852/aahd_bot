@@ -104,17 +104,10 @@ func SendMessageEveryDay() {
 	}
 
 	for {
-		if !messageExist() {
-			sendMessage()
-		}
+		sendMessage()
 		time.Sleep(d)
 		d = 24 * time.Hour
 	}
-}
-
-func messageExist() bool {
-	ahhd := GetAhhdEventByDate(time.Now().In(LoadTehranTime()))
-	return ahhd != nil
 }
 
 var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
@@ -124,9 +117,17 @@ var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	),
 )
 
+func messageExist(group *Group) bool {
+	ahhd := GetAhhdEventByDate(group, time.Now().In(LoadTehranTime()))
+	return ahhd != nil
+}
+
 func sendMessage() {
 	t := time.Now()
 	for _, group := range GetAllGroups() {
+		if messageExist(&group) {
+			continue
+		}
 		text := group.Name + "\n"
 		for _, user := range group.Users {
 			text += user.Name + ":" + getStatusString(&user, t, &group) + "\n"
