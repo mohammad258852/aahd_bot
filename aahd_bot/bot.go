@@ -130,7 +130,7 @@ func sendMessage() {
 		}
 		text := group.Name + "\n"
 		for _, user := range group.Users {
-			text += user.Name + ":" + getStatusString(&user, t, &group) + "\n"
+			text += user.Name + ":\n"
 		}
 
 		msg := tgbotapi.NewMessage(group.Id, text)
@@ -144,8 +144,8 @@ func sendMessage() {
 	}
 }
 
-func getStatusString(user *User, t time.Time, g *Group) string {
-	status := GetUserStatus(user, t, g)
+func getStatusString(user *User, t time.Time, aahdEvent *AhhdEvent) string {
+	status := GetUserStatus(user, t, aahdEvent)
 	if status == nil {
 		return ""
 	}

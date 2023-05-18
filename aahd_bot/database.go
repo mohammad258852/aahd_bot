@@ -72,11 +72,14 @@ func GetAllGroups() []Group {
 	return groups
 }
 
-func GetUserStatus(user *User, t time.Time, g *Group) *Status {
+func GetUserStatus(user *User, t time.Time, ahhdEvent *AhhdEvent) *Status {
 	var status *Status
-	db.First(status, "user = ? AND date = ? AND group = ?", user, datatypes.Date(t), g)
+	err := db.
+		Where("user_id = ? AND date = ? AND ahhd_id = ?", user.Id, datatypes.Date(t), ahhdEvent.MessageId).
+		First(status).
+		Error
 
-	if status == nil {
+	if err != nil {
 		return nil
 	}
 	return status
