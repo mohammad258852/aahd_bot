@@ -60,6 +60,8 @@ func handleMessage(update *tgbotapi.Update) {
 		text = "خوش اومدی"
 	case "/out":
 		text = "حیف شد"
+	default:
+		text = "متوجه نشدم"
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
