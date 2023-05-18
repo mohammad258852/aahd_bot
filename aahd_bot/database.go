@@ -1,11 +1,13 @@
 package aahd_bot
 
 import (
+	"log"
 	"time"
 
 	"gorm.io/datatypes"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type User struct {
@@ -14,19 +16,19 @@ type User struct {
 }
 
 type AhhdEvent struct {
-	MessageId int64
-	Date      datatypes.Date `gorm:"primarykey"`
-	GroupId   int64
+	MessageId int64 `gorm:"primarykey"`
+	Date      datatypes.Date
+	GroupId   int64 `gorm:"primarykey"`
 	Group     Group
 }
 
 type Status struct {
-	gorm.Model
-	UserId int64
-	User   User
-	Read   bool `gorm:"default:false"`
-	AhhdId int64
-	Ahhd   AhhdEvent
+	UserId        int64 `gorm:"primarykey"`
+	User          User
+	Read          bool  `gorm:"default:false"`
+	AhhdMessageId int64 `gorm:"primarykey"`
+	AhhdGroupId   int64 `gorm:"primarykey"`
+	Ahhd          AhhdEvent
 }
 
 type Group struct {
@@ -59,38 +61,41 @@ func GetAhhdEventByDate(group *Group, t time.Time) *AhhdEvent {
 		First(&result).
 		Error
 	if err != nil {
+		log.Print(err)
 		return nil
 	}
 	return &result
 }
 
 func GetAahdEventByMessageId(messageId int64) *AhhdEvent {
-	var aahdEvent *AhhdEvent
-	err := db.Where("message_id = ?", messageId).First(aahdEvent).Error
+	var aahdEvent AhhdEvent
+	err := db.Where("message_id = ?", messageId).First(&aahdEvent).Error
 	if err != nil {
+		log.Print(err)
 		return nil
 	}
-	return aahdEvent
+	return &aahdEvent
 }
 
 func GetAllGroups() []Group {
 	var groups []Group
 
-	db.Find(&groups)
+	db.Preload(clause.Associations).Find(&groups)
 	return groups
 }
 
 func GetUserStatus(user *User, ahhdEvent *AhhdEvent) *Status {
-	var status *Status
+	var status Status
 	err := db.
-		Where("user_id = ? AND ahhd_id = ?", user.Id, ahhdEvent.MessageId).
-		First(status).
+		Where("user_id = ? AND ahhd_message_id = ? AND ahhd_group_id", user.Id, ahhdEvent.MessageId, ahhdEvent.GroupId).
+		First(&status).
 		Error
 
 	if err != nil {
+		log.Print(err)
 		return nil
 	}
-	return status
+	return &status
 }
 
 func AddAahdEvent(messageId int64, t time.Time, group *Group) {
@@ -110,19 +115,21 @@ func SaveStatus(status *Status) {
 }
 
 func GetGroup(id int64) *Group {
-	var group *Group
-	err := db.First(group, id).Error
+	var group Group
+	err := db.Preload(clause.Associations).First(&group, id).Error
 	if err != nil {
+		log.Print(err)
 		return nil
 	}
-	return group
+	return &group
 }
 
 func GetUser(id int64) *User {
-	var user *User
-	err := db.First(user, id).Error
+	var user User
+	err := db.First(&user, id).Error
 	if err != nil {
+		log.Print(err)
 		return nil
 	}
-	return user
+	return &user
 }

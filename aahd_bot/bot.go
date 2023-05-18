@@ -71,14 +71,18 @@ func handleCallbackQuery(update *tgbotapi.Update) {
 	data := update.CallbackQuery.Data
 	read := data == "1"
 
-	status := Status{User: *user, Ahhd: *aahdEvent, Read: read}
-	SaveStatus(&status)
+	status := GetUserStatus(user, aahdEvent)
+	if status == nil {
+		status = &Status{User: *user, Ahhd: *aahdEvent, Read: read}
+	}
+	status.Read = read
+	SaveStatus(status)
 	updateMessage(group, aahdEvent)
 }
 
 func updateMessage(group *Group, aahdEvent *AhhdEvent) {
 	text := getText(group, aahdEvent)
-	msg := tgbotapi.NewEditMessageText(group.Id, int(aahdEvent.MessageId), text)
+	msg := tgbotapi.NewEditMessageTextAndMarkup(group.Id, int(aahdEvent.MessageId), text, numericKeyboard)
 	if _, err := bot.Request(msg); err != nil {
 		log.Print(err)
 	}
