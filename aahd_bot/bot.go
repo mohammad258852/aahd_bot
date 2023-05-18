@@ -80,6 +80,11 @@ func handleCallbackQuery(update *tgbotapi.Update) {
 	status.Read = read
 	SaveStatus(status)
 	updateMessage(group, aahdEvent)
+
+	msg := tgbotapi.NewCallback(update.CallbackQuery.ID, "حله")
+	if _, err := bot.Send(msg); err != nil {
+		log.Print(err)
+	}
 }
 
 func updateMessage(group *Group, aahdEvent *AhhdEvent) {
