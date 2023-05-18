@@ -41,18 +41,30 @@ func handleUpdate(update *tgbotapi.Update) {
 }
 
 func handleCallbackQuery(update *tgbotapi.Update) {
+	var errorText string
 	chatId := update.CallbackQuery.Message.Chat.ID
 	group := GetGroup(chatId)
+	if group == nil {
+		errorText = "گروه در دیتابیس وجود ندارد"
+	}
 
 	messageId := update.CallbackQuery.Message.MessageID
 	aahdEvent := GetAahdEventByMessageId(int64(messageId))
 
+	if aahdEvent == nil {
+		errorText = "پیام در دیتابیس وجود ندارد"
+	}
+
 	userId := update.CallbackQuery.From.ID
 	user := GetUser(userId)
-	if group == nil || aahdEvent == nil || user == nil {
-		msg := tgbotapi.NewCallback(update.CallbackQuery.ID, "یه مشکلی هست")
+
+	if user == nil {
+		errorText = "کاربر در دیتابیس وجود ندارد"
+	}
+	if errorText != "" {
+		msg := tgbotapi.NewCallback(update.CallbackQuery.ID, errorText)
 		if _, err := bot.Send(msg); err != nil {
-			log.Panic(err)
+			log.Print(err)
 		}
 		return
 	}
@@ -67,8 +79,8 @@ func handleCallbackQuery(update *tgbotapi.Update) {
 func updateMessage(group *Group, aahdEvent *AhhdEvent) {
 	text := getText(group, aahdEvent)
 	msg := tgbotapi.NewEditMessageText(group.Id, int(aahdEvent.MessageId), text)
-	if _, err := bot.Send(msg); err != nil {
-		log.Panic(err)
+	if _, err := bot.Request(msg); err != nil {
+		log.Print(err)
 	}
 }
 
@@ -88,7 +100,7 @@ func handleMessage(update *tgbotapi.Update) {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 	msg.ReplyToMessageID = update.Message.MessageID
 	if _, err := bot.Send(msg); err != nil {
-		log.Panic(err)
+		log.Print(err)
 	}
 }
 
@@ -124,7 +136,7 @@ func LoadTehranTime() *time.Location {
 	var err error
 	tehranTime, err = time.LoadLocation("Asia/Tehran")
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 	}
 	return tehranTime
 }
@@ -174,7 +186,7 @@ func sendMessageToGroup(group Group, t time.Time) {
 	msg.ReplyMarkup = numericKeyboard
 	res, err := bot.Send(msg)
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 	}
 
 	AddAahdEvent(int64(res.MessageID), t, &group)
