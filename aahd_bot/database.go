@@ -25,7 +25,6 @@ type Status struct {
 	UserId int64
 	User   User
 	Read   bool `gorm:"default:false"`
-	Date   datatypes.Date
 	AhhdId int64
 	Ahhd   AhhdEvent
 }
@@ -65,6 +64,15 @@ func GetAhhdEventByDate(group *Group, t time.Time) *AhhdEvent {
 	return &result
 }
 
+func GetAahdEventByMessageId(messageId int64) *AhhdEvent {
+	var aahdEvent *AhhdEvent
+	err := db.Where("message_id = ?", messageId).First(aahdEvent).Error
+	if err != nil {
+		return nil
+	}
+	return aahdEvent
+}
+
 func GetAllGroups() []Group {
 	var groups []Group
 
@@ -72,10 +80,10 @@ func GetAllGroups() []Group {
 	return groups
 }
 
-func GetUserStatus(user *User, t time.Time, ahhdEvent *AhhdEvent) *Status {
+func GetUserStatus(user *User, ahhdEvent *AhhdEvent) *Status {
 	var status *Status
 	err := db.
-		Where("user_id = ? AND date = ? AND ahhd_id = ?", user.Id, datatypes.Date(t), ahhdEvent.MessageId).
+		Where("user_id = ? AND ahhd_id = ?", user.Id, ahhdEvent.MessageId).
 		First(status).
 		Error
 
@@ -87,4 +95,34 @@ func GetUserStatus(user *User, t time.Time, ahhdEvent *AhhdEvent) *Status {
 
 func AddAahdEvent(messageId int64, t time.Time, group *Group) {
 	db.Create(&AhhdEvent{messageId, datatypes.Date(t), group.Id, *group})
+}
+
+func SaveGroup(group *Group) {
+	db.Save(group)
+}
+
+func SaveUser(user *User) {
+	db.Save(user)
+}
+
+func SaveStatus(status *Status) {
+	db.Save(status)
+}
+
+func GetGroup(id int64) *Group {
+	var group *Group
+	err := db.First(group, id).Error
+	if err != nil {
+		return nil
+	}
+	return group
+}
+
+func GetUser(id int64) *User {
+	var user *User
+	err := db.First(user, id).Error
+	if err != nil {
+		return nil
+	}
+	return user
 }

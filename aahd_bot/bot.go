@@ -41,14 +41,34 @@ func handleUpdate(update *tgbotapi.Update) {
 }
 
 func handleCallbackQuery(update *tgbotapi.Update) {
-	callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
-	if _, err := bot.Request(callback); err != nil {
-		panic(err)
-	}
+	chatId := update.CallbackQuery.Message.Chat.ID
+	group := GetGroup(chatId)
 
-	msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
+	messageId := update.CallbackQuery.Message.MessageID
+	aahdEvent := GetAahdEventByMessageId(int64(messageId))
+
+	userId := update.CallbackQuery.From.ID
+	user := GetUser(userId)
+	if group == nil || aahdEvent == nil || user == nil {
+		msg := tgbotapi.NewCallback(update.CallbackQuery.ID, "یه مشکلی هست")
+		if _, err := bot.Send(msg); err != nil {
+			log.Panic(err)
+		}
+		return
+	}
+	data := update.CallbackQuery.Data
+	read := data == "1"
+
+	status := Status{User: *user, Ahhd: *aahdEvent, Read: read}
+	SaveStatus(&status)
+	updateMessage(group, aahdEvent)
+}
+
+func updateMessage(group *Group, aahdEvent *AhhdEvent) {
+	text := getText(group, aahdEvent)
+	msg := tgbotapi.NewEditMessageText(group.Id, int(aahdEvent.MessageId), text)
 	if _, err := bot.Send(msg); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -57,6 +77,7 @@ func handleMessage(update *tgbotapi.Update) {
 
 	switch update.Message.Text {
 	case "/in":
+		addUser(update)
 		text = "خوش اومدی"
 	case "/out":
 		text = "حیف شد"
@@ -67,8 +88,22 @@ func handleMessage(update *tgbotapi.Update) {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 	msg.ReplyToMessageID = update.Message.MessageID
 	if _, err := bot.Send(msg); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
+}
+
+func addUser(update *tgbotapi.Update) {
+	userId := update.Message.From.ID
+	userName := update.Message.From.FirstName + " " + update.Message.From.LastName
+	user := &User{Id: userId, Name: userName}
+	SaveUser(user)
+
+	chatId := update.Message.Chat.ID
+	chatName := update.Message.Chat.Title
+	group := &Group{Id: chatId, Name: chatName}
+	group.Users = append(group.Users, *user)
+	SaveGroup(group)
+
 }
 
 func getUpdateChannel() tgbotapi.UpdatesChannel {
@@ -104,7 +139,7 @@ func SendMessageEveryDay() {
 	}
 
 	for {
-		sendMessage()
+		sendMessageAllGroups()
 		time.Sleep(d)
 		d = 24 * time.Hour
 	}
@@ -117,35 +152,47 @@ var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	),
 )
 
-func messageExist(group *Group) bool {
-	ahhd := GetAhhdEventByDate(group, time.Now().In(LoadTehranTime()))
+func messageExist(group *Group, t time.Time) bool {
+	ahhd := GetAhhdEventByDate(group, t)
 	return ahhd != nil
 }
 
-func sendMessage() {
+func sendMessageAllGroups() {
 	t := time.Now()
 	for _, group := range GetAllGroups() {
-		if messageExist(&group) {
-			continue
-		}
-		text := group.Name + "\n"
-		for _, user := range group.Users {
-			text += user.Name + ":\n"
-		}
-
-		msg := tgbotapi.NewMessage(group.Id, text)
-		msg.ReplyMarkup = numericKeyboard
-		res, err := bot.Send(msg)
-		if err != nil {
-			log.Panic(err)
-		}
-
-		AddAahdEvent(int64(res.MessageID), t, &group)
+		sendMessageToGroup(group, t)
 	}
 }
 
-func getStatusString(user *User, t time.Time, aahdEvent *AhhdEvent) string {
-	status := GetUserStatus(user, t, aahdEvent)
+func sendMessageToGroup(group Group, t time.Time) {
+	if messageExist(&group, t) {
+		return
+	}
+	text := getText(&group, nil)
+
+	msg := tgbotapi.NewMessage(group.Id, text)
+	msg.ReplyMarkup = numericKeyboard
+	res, err := bot.Send(msg)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	AddAahdEvent(int64(res.MessageID), t, &group)
+}
+
+func getText(group *Group, aahdEvent *AhhdEvent) string {
+	text := group.Name + "\n"
+	for _, user := range group.Users {
+		text += user.Name + ":" + getStatusString(&user, aahdEvent) + "\n"
+	}
+	return text
+}
+
+func getStatusString(user *User, aahdEvent *AhhdEvent) string {
+	if aahdEvent == nil {
+		return ""
+	}
+	status := GetUserStatus(user, aahdEvent)
 	if status == nil {
 		return ""
 	}
