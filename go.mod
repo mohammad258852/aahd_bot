@@ -14,5 +14,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
+	github.com/yaa110/go-persian-calendar v1.1.4
 	gorm.io/driver/mysql v1.4.7 // indirect
 )

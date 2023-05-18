@@ -1,11 +1,13 @@
 package aahd_bot
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	ptime "github.com/yaa110/go-persian-calendar"
 )
 
 var bot *tgbotapi.BotAPI
@@ -81,7 +83,7 @@ func handleCallbackQuery(update *tgbotapi.Update) {
 }
 
 func updateMessage(group *Group, aahdEvent *AhhdEvent) {
-	text := getText(group, aahdEvent)
+	text := getText(group, aahdEvent, time.Time(aahdEvent.Date))
 	msg := tgbotapi.NewEditMessageTextAndMarkup(group.Id, int(aahdEvent.MessageId), text, numericKeyboard)
 	if _, err := bot.Request(msg); err != nil {
 		log.Print(err)
@@ -184,7 +186,7 @@ func sendMessageToGroup(group Group, t time.Time) {
 	if messageExist(&group, t) {
 		return
 	}
-	text := getText(&group, nil)
+	text := getText(&group, nil, t)
 
 	msg := tgbotapi.NewMessage(group.Id, text)
 	msg.ReplyMarkup = numericKeyboard
@@ -196,8 +198,11 @@ func sendMessageToGroup(group Group, t time.Time) {
 	AddAahdEvent(int64(res.MessageID), t, &group)
 }
 
-func getText(group *Group, aahdEvent *AhhdEvent) string {
-	text := group.Name + "\n"
+func getText(group *Group, aahdEvent *AhhdEvent, t time.Time) string {
+	text := group.Name + ":\n"
+	p := ptime.New(t)
+	text += fmt.Sprintf("🗓 %s/ %d %s %d\n", p.Weekday(), p.Day(), p.Month(), p.Year())
+
 	for _, user := range group.Users {
 		text += user.Name + ":" + getStatusString(&user, aahdEvent) + "\n"
 	}
