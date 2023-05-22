@@ -168,8 +168,8 @@ func SendMessageEveryDay() {
 
 var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("خوندم", "1"),
-		tgbotapi.NewInlineKeyboardButtonData("صدقه", "0"),
+		tgbotapi.NewInlineKeyboardButtonData("✅", "1"),
+		tgbotapi.NewInlineKeyboardButtonData("⛔️", "0"),
 	),
 )
 
