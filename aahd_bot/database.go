@@ -110,6 +110,10 @@ func SaveUser(user *User) {
 	db.Save(user)
 }
 
+func DeleteUser(id int64) {
+	db.Delete(&User{}, id)
+}
+
 func SaveStatus(status *Status) {
 	db.Save(status)
 }

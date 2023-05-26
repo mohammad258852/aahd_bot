@@ -113,18 +113,80 @@ func handleMessage(update *tgbotapi.Update) {
 	}
 }
 
-func addUser(update *tgbotapi.Update) {
-	userId := update.Message.From.ID
-	userName := update.Message.From.FirstName + " " + update.Message.From.LastName
-	user := &User{Id: userId, Name: userName}
-	SaveUser(user)
+func removeUser(update *tgbotapi.Update) string {
+	tor := "حیف شد"
+
+	user := update.Message.From
+	if update.Message.ReplyToMessage != nil{
+		if isAdmin()
+	}
+	userId := user.ID
+	userName := user.FirstName + " " + user.LastName
 
 	chatId := update.Message.Chat.ID
 	chatName := update.Message.Chat.Title
-	group := &Group{Id: chatId, Name: chatName}
+
+	innerRemoveUser(userId, userName, chatId, chatName)
+	return tor
+}
+
+func innerRemoveUser(userId int64, userName string, chatId int64, chatName string) {
+	user := GetUser(userId)
+	if user == nil {
+		user = &User{Id: userId, Name: userName}
+	}
+	bot.GetChatMember(tgbotapi.GetChatMemberConfig{})
+	SaveUser(user)
+
+	group := GetGroup(chatId)
+	if group == nil {
+		group = &Group{Id: chatId, Name: chatName}
+	}
+
+	group.Users = FindAndDelete(group.Users, func(x User) bool { return x.Id == user.Id })
+	SaveGroup(group)
+}
+
+func addUser(update *tgbotapi.Update) string {
+	tor := "خوش اومدی"
+	chatId := update.Message.Chat.ID
+	chatName := update.Message.Chat.Title
+
+	user := update.Message.From
+	if update.Message.ReplyToMessage != nil {
+		if isAdmin(user.ID, chatId) {
+			user = update.Message.ReplyToMessage.From
+			tor = "اضافه شد"
+		}
+	}
+	userId := user.ID
+	userName := user.FirstName + " " + user.LastName
+
+	innerAddUser(userId, userName, chatId, chatName)
+	return tor
+}
+
+func isAdmin(userId int64, chatId int64) bool {
+	admins, err := bot.GetChatAdministrators(tgbotapi.ChatAdministratorsConfig{ChatConfig: tgbotapi.ChatConfig{ChatID: chatId}})
+	if err != nil {
+		return false
+	}
+	return Find(admins, func(x tgbotapi.ChatMember) bool { return x.User.ID == userId })
+}
+
+func innerAddUser(userId int64, userName string, chatId int64, chatName string) {
+	user := GetUser(userId)
+	if user == nil {
+		user = &User{Id: userId, Name: userName}
+	}
+	SaveUser(user)
+
+	group := GetGroup(chatId)
+	if group == nil {
+		group = &Group{Id: chatId, Name: chatName}
+	}
 	group.Users = append(group.Users, *user)
 	SaveGroup(group)
-
 }
 
 func getUpdateChannel() tgbotapi.UpdatesChannel {
