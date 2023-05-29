@@ -179,7 +179,7 @@ func messageExist(group *Group, t time.Time) bool {
 }
 
 func sendMessageAllGroups() {
-	t := time.Now()
+	t := time.Now().In(LoadTehranTime())
 	for _, group := range GetAllGroups() {
 		sendMessageToGroup(group, t)
 	}
