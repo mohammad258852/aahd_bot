@@ -218,16 +218,24 @@ func sendMessageToGroup(group Group, t time.Time) {
 	AddAahdEvent(int64(res.MessageID), t, &group)
 }
 
+var markdownEscapeRegex = regexp.MustCompile(`([.\#*_{}\[\]])`)
+
+func escapedMarkdownText(text string) string {
+	return markdownEscapeRegex.ReplaceAllString(text, `\$1`)
+}
+
 func getText(group *Group, aahdEvent *AhhdEvent, t time.Time, markdown bool) string {
 	text := group.Name + ":\n"
 	p := ptime.New(t)
 	text += fmt.Sprintf("🗓 %s/ %d %s %d\n", p.Weekday(), p.Day(), p.Month(), p.Year())
 
 	for _, user := range group.Users {
+		statusStr := getStatusString(&user, aahdEvent)
 		if markdown {
-			text += fmt.Sprintf("[%s](tg://user?id=%d):%s\n", user.Name, user.Id, getStatusString(&user, aahdEvent))
+
+			text += fmt.Sprintf("[%s](tg://user?id=%d):%s\n", escapedMarkdownText(user.Name), user.Id, escapedMarkdownText(statusStr))
 		} else {
-			text += user.Name + ":" + getStatusString(&user, aahdEvent) + "\n"
+			text += user.Name + ":" + statusStr + "\n"
 		}
 	}
 	return text
