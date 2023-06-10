@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -95,6 +96,8 @@ func updateMessage(group *Group, aahdEvent *AhhdEvent) {
 	}
 }
 
+var r, _ = regexp.Compile(`/name\w*\s+(.*)`)
+
 func handleMessage(update *tgbotapi.Update) {
 	var text string
 
@@ -106,11 +109,23 @@ func handleMessage(update *tgbotapi.Update) {
 		text = "حیف شد"
 	}
 
+	if r.MatchString(update.Message.Text) {
+		rename(update)
+		text = "حله"
+	}
+
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 	msg.ReplyToMessageID = update.Message.MessageID
 	if _, err := bot.Send(msg); err != nil {
 		log.Print(err)
 	}
+}
+
+func rename(update *tgbotapi.Update) {
+	userId := update.Message.From.ID
+	userName := r.FindStringSubmatch(update.Message.Text)[1]
+	user := &User{Id: userId, Name: userName}
+	SaveUser(user)
 }
 
 func addUser(update *tgbotapi.Update) {
