@@ -100,47 +100,58 @@ func updateMessage(group *Group, aahdEvent *AhhdEvent) {
 var r, _ = regexp.Compile(`/name\w*\s+(.*)`)
 
 func handleMessage(update *tgbotapi.Update) {
-	var text string
+	var text *string
 
 	switch update.Message.Text {
 	case "/in":
-		addUser(update)
-		text = "خوش اومدی"
+		text = addUser(update)
 	case "/out":
-		text = "حیف شد"
+		*text = "حیف شد"
 	}
 
 	if r.MatchString(update.Message.Text) {
-		rename(update)
-		text = "حله"
+		text = rename(update)
 	}
 
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
-	msg.ReplyToMessageID = update.Message.MessageID
-	if _, err := bot.Send(msg); err != nil {
-		log.Print(err)
+	if text != nil {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, *text)
+		msg.ReplyToMessageID = update.Message.MessageID
+		if _, err := bot.Send(msg); err != nil {
+			log.Print(err)
+		}
 	}
 }
 
-func rename(update *tgbotapi.Update) {
+func rename(update *tgbotapi.Update) *string {
 	userId := update.Message.From.ID
 	userName := r.FindStringSubmatch(update.Message.Text)[1]
 	user := &User{Id: userId, Name: userName}
 	SaveUser(user)
+	text := "حله"
+	return &text
 }
 
-func addUser(update *tgbotapi.Update) {
+func addUser(update *tgbotapi.Update) *string {
 	userId := update.Message.From.ID
 	userName := update.Message.From.FirstName + " " + update.Message.From.LastName
 	user := &User{Id: userId, Name: userName}
 	SaveUser(user)
 
 	chatId := update.Message.Chat.ID
-	chatName := update.Message.Chat.Title
-	group := &Group{Id: chatId, Name: chatName}
+	group := GetGroup(chatId)
+	if group == nil {
+		chatName := update.Message.Chat.Title
+		group = &Group{Id: chatId, Name: chatName}
+	}
+	for _, u := range group.Users {
+		if u.Id == user.Id {
+			return nil
+		}
+	}
 	group.Users = append(group.Users, *user)
 	SaveGroup(group)
-
+	text := "خوش اومدی"
+	return &text
 }
 
 func getUpdateChannel() tgbotapi.UpdatesChannel {
