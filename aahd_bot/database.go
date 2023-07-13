@@ -133,3 +133,13 @@ func GetUser(id int64) *User {
 	}
 	return &user
 }
+
+func DeleteUserFromGroup(userId int64, groupId int64) {
+	group := GetGroup(groupId)
+	user := GetUser(userId)
+
+	if group == nil || user == nil {
+		return
+	}
+	db.Model(group).Association("Users").Delete(user)
+}
