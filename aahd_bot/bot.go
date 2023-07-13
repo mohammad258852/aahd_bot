@@ -120,6 +120,16 @@ func handleMessage(update *tgbotapi.Update) {
 			log.Print(err)
 		}
 	}
+
+	if update.Message.LeftChatMember != nil {
+		handleLefChat(update)
+	}
+}
+
+func handleLefChat(update *tgbotapi.Update) {
+	userId := update.Message.LeftChatMember.ID
+	chatId := update.Message.Chat.ID
+	DeleteUserFromGroup(userId, chatId)
 }
 
 func rename(update *tgbotapi.Update) *string {
