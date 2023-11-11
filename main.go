@@ -1,20 +1,22 @@
 package main
 
 import (
-	"aahd_bot/aahd_bot"
+	"aahd_bot/bot"
+	"aahd_bot/db"
 	"log"
 )
 
 func main() {
-	err := aahd_bot.InitDatabase()
+	err := db.InitDatabase()
 	if err != nil {
 		log.Print(err)
 	}
-	err = aahd_bot.CreateBot()
+	err = bot.CreateBot()
 	if err != nil {
-		log.Print(err)
+		log.Printf("Error in Creating Bot: %s", err)
+		return
 	}
 
-	go aahd_bot.SendMessageEveryDay()
-	aahd_bot.RunBot()
+	go bot.SendMessageEveryDay()
+	bot.RunBot()
 }

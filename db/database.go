@@ -1,4 +1,4 @@
-package aahd_bot
+package db
 
 import (
 	"log"
@@ -10,33 +10,6 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type User struct {
-	Id   int64 `gorm:"primarykey"`
-	Name string
-}
-
-type AhhdEvent struct {
-	MessageId int64 `gorm:"primarykey"`
-	Date      datatypes.Date
-	GroupId   int64 `gorm:"primarykey"`
-	Group     Group
-}
-
-type Status struct {
-	UserId        int64 `gorm:"primarykey"`
-	User          User
-	Read          bool  `gorm:"default:false"`
-	AhhdMessageId int64 `gorm:"primarykey"`
-	AhhdGroupId   int64 `gorm:"primarykey"`
-	Ahhd          AhhdEvent
-}
-
-type Group struct {
-	Id    int64  `gorm:"primarykey"`
-	Users []User `gorm:"many2many:user_group;"`
-	Name  string
-}
-
 var db *gorm.DB
 
 func InitDatabase() error {
@@ -46,16 +19,28 @@ func InitDatabase() error {
 		return err
 	}
 
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&AhhdEvent{})
-	db.AutoMigrate(&Status{})
-	db.AutoMigrate(&Group{})
+	err = db.AutoMigrate(&User{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&AahdEvent{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&Status{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&Group{})
+	if err != nil {
+		return err
+	}
 
 	return err
 }
 
-func GetAhhdEventByDate(group *Group, t time.Time) *AhhdEvent {
-	var result AhhdEvent
+func GetAhhdEventByDate(group *Group, t time.Time) *AahdEvent {
+	var result AahdEvent
 	err := db.
 		Where("date = ? AND group_id = ?", datatypes.Date(t), group.Id).
 		First(&result).
@@ -67,8 +52,8 @@ func GetAhhdEventByDate(group *Group, t time.Time) *AhhdEvent {
 	return &result
 }
 
-func GetAahdEventByMessageId(messageId int64) *AhhdEvent {
-	var aahdEvent AhhdEvent
+func GetAahdEventByMessageId(messageId int64) *AahdEvent {
+	var aahdEvent AahdEvent
 	err := db.Where("message_id = ?", messageId).First(&aahdEvent).Error
 	if err != nil {
 		log.Print(err)
@@ -84,7 +69,7 @@ func GetAllGroups() []Group {
 	return groups
 }
 
-func GetUserStatus(user *User, ahhdEvent *AhhdEvent) *Status {
+func GetUserStatus(user *User, ahhdEvent *AahdEvent) *Status {
 	var status Status
 	err := db.
 		Where("user_id = ? AND ahhd_message_id = ? AND ahhd_group_id", user.Id, ahhdEvent.MessageId, ahhdEvent.GroupId).
@@ -99,7 +84,7 @@ func GetUserStatus(user *User, ahhdEvent *AhhdEvent) *Status {
 }
 
 func AddAahdEvent(messageId int64, t time.Time, group *Group) {
-	db.Create(&AhhdEvent{messageId, datatypes.Date(t), group.Id, *group})
+	db.Create(&AahdEvent{messageId, datatypes.Date(t), group.Id, *group})
 }
 
 func SaveGroup(group *Group) {
@@ -141,5 +126,9 @@ func DeleteUserFromGroup(userId int64, groupId int64) {
 	if group == nil || user == nil {
 		return
 	}
-	db.Model(group).Association("Users").Delete(user)
+	err := db.Model(group).Association("Users").Delete(user)
+	if err != nil {
+		log.Printf("error in deleting user %s from group %s. error: %s", user.Name, group.Name, err)
+		return
+	}
 }
