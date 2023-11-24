@@ -32,7 +32,7 @@ func GetDurationTilNextDay() time.Duration {
 
 func GetDurationTilNextWeekDay(weekday time.Weekday) time.Duration {
 	t := GetCurrentLocalTime()
-	n := time.Date(t.Year(), t.Month(), t.Day(), 12, 0, 0, 0, t.Location())
+	n := time.Date(t.Year(), t.Month(), t.Day(), 12, 15, 0, 0, t.Location())
 	if n.Sub(t) < 0 {
 		n = n.Add(24 * time.Hour)
 	}

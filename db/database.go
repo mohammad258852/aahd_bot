@@ -87,7 +87,7 @@ func GetWeeklyRead(user *User, group *Group, t time.Time) *int {
 	var result int
 	err := db.Table("statuses as s").
 		Select("count(*)").
-		Joins("join aahd_events as a on s.ahhd_group_id = a.group_id and s.ahhd_message_id = a.message_id").
+		Joins("join ahhd_events as a on s.ahhd_group_id = a.group_id and s.ahhd_message_id = a.message_id").
 		Where("s.user_id = ? AND s.ahhd_group_id = ? AND a.date < datetime(?, '-1 day') AND a.date > datetime(?, '-8 day')", user.Id, group.Id, t, t).
 		Scan(&result).
 		Error
