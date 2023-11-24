@@ -34,7 +34,7 @@ func RunBot() {
 	}
 }
 
-func updateMessage(group *db.Group, aahdEvent *db.AahdEvent) {
+func updateMessage(group *db.Group, aahdEvent *db.AhhdEvent) {
 	text := util.GetText(group, aahdEvent, time.Time(aahdEvent.Date), true)
 	msg := tgbotapi.NewEditMessageTextAndMarkup(group.Id, int(aahdEvent.MessageId), text, util.NumericKeyboard)
 	msg.ParseMode = "MarkdownV2"

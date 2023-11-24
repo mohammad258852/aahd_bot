@@ -17,7 +17,7 @@ var NumericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	),
 )
 
-func GetText(group *db.Group, aahdEvent *db.AahdEvent, t time.Time, markdown bool) string {
+func GetText(group *db.Group, aahdEvent *db.AhhdEvent, t time.Time, markdown bool) string {
 	text := group.Name + ":\n"
 	p := ptime.New(t)
 	text += fmt.Sprintf("🗓 %s/ %d %s %d\n", p.Weekday(), p.Day(), p.Month(), p.Year())
@@ -63,7 +63,7 @@ func escapedMarkdownText(text string) string {
 	return markdownEscapeRegex.ReplaceAllString(text, `\$1`)
 }
 
-func getStatusString(user *db.User, aahdEvent *db.AahdEvent) string {
+func getStatusString(user *db.User, aahdEvent *db.AhhdEvent) string {
 	if aahdEvent == nil {
 		return ""
 	}
