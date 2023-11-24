@@ -30,6 +30,18 @@ func GetDurationTilNextDay() time.Duration {
 	return d
 }
 
+func GetDurationTilNextWeekDay(weekday time.Weekday) time.Duration {
+	t := GetCurrentLocalTime()
+	n := time.Date(t.Year(), t.Month(), t.Day(), 12, 0, 0, 0, t.Location())
+	if n.Sub(t) < 0 {
+		n = n.Add(24 * time.Hour)
+	}
+	for n.Weekday() != weekday {
+		n = n.Add(24 * time.Hour)
+	}
+	return n.Sub(t)
+}
+
 func GetCurrentLocalTime() time.Time {
 	return time.Now().In(LoadTehranTime())
 }

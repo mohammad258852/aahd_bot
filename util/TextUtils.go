@@ -6,6 +6,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	ptime "github.com/yaa110/go-persian-calendar"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -31,6 +32,29 @@ func GetText(group *db.Group, aahdEvent *db.AahdEvent, t time.Time, markdown boo
 		}
 	}
 	return text
+}
+
+func GetReminderText(group *db.Group, t time.Time, markdown bool) string {
+	text := group.Name + ":\n"
+	text += fmt.Sprintf("یادآوری هفت روز گذشته\n")
+
+	for _, user := range group.Users {
+		unreadCount := getUnreadCount(&user, group, t)
+		if markdown {
+			text += fmt.Sprintf("[%s](tg://user?id=%d):%d روز\n", escapedMarkdownText(user.Name), user.Id, unreadCount)
+		} else {
+			text += user.Name + ":" + strconv.Itoa(unreadCount) + "\n"
+		}
+	}
+	return text
+}
+
+func getUnreadCount(user *db.User, group *db.Group, t time.Time) int {
+	read := db.GetWeeklyRead(user, group, t)
+	if read == nil {
+		return 7
+	}
+	return 7 - *read
 }
 
 var markdownEscapeRegex = regexp.MustCompile(`([.#*_{}\[\]])`)
