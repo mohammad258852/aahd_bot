@@ -40,10 +40,12 @@ func GetReminderText(group *db.Group, t time.Time, markdown bool) string {
 
 	for _, user := range group.Users {
 		unreadCount := getUnreadCount(&user, group, t)
-		if markdown {
-			text += fmt.Sprintf("[%s](tg://user?id=%d):%d روز\n", escapedMarkdownText(user.Name), user.Id, unreadCount)
-		} else {
-			text += user.Name + ":" + strconv.Itoa(unreadCount) + "\n"
+		if unreadCount != 0 {
+			if markdown {
+				text += fmt.Sprintf("[%s](tg://user?id=%d):%d روز\n", escapedMarkdownText(user.Name), user.Id, unreadCount)
+			} else {
+				text += user.Name + ":" + strconv.Itoa(unreadCount) + "\n"
+			}
 		}
 	}
 	return text
