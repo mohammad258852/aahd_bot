@@ -10,6 +10,7 @@ func main() {
 	err := db.InitDatabase()
 	if err != nil {
 		log.Print(err)
+		return
 	}
 	err = bot.CreateBot()
 	if err != nil {
@@ -18,5 +19,6 @@ func main() {
 	}
 
 	go bot.SendMessageEveryDay()
+	go bot.SendMessageEveryWeek()
 	bot.RunBot()
 }

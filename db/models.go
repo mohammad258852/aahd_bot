@@ -7,7 +7,7 @@ type User struct {
 	Name string
 }
 
-type AahdEvent struct {
+type AhhdEvent struct {
 	MessageId int64 `gorm:"primarykey"`
 	Date      datatypes.Date
 	GroupId   int64 `gorm:"primarykey"`
@@ -20,7 +20,7 @@ type Status struct {
 	Read          bool  `gorm:"default:false"`
 	AhhdMessageId int64 `gorm:"primarykey"`
 	AhhdGroupId   int64 `gorm:"primarykey"`
-	Ahhd          AahdEvent
+	Ahhd          AhhdEvent
 }
 
 type Group struct {
