@@ -2,9 +2,10 @@ package bot
 
 import (
 	"aahd_bot/db"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"regexp"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func handleUpdate(update *tgbotapi.Update) {
@@ -51,7 +52,7 @@ func handleCallbackQuery(update *tgbotapi.Update) {
 	}
 
 	messageId := update.CallbackQuery.Message.MessageID
-	aahdEvent := db.GetAahdEventByMessageId(int64(messageId))
+	aahdEvent := db.GetAahdEventByGroupIdAndMessageId(chatId, int64(messageId))
 
 	if aahdEvent == nil {
 		errorText = "پیام در دیتابیس وجود ندارد"

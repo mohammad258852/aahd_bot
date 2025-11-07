@@ -52,9 +52,9 @@ func GetAhhdEventByDate(group *Group, t time.Time) *AhhdEvent {
 	return &result
 }
 
-func GetAahdEventByMessageId(messageId int64) *AhhdEvent {
+func GetAahdEventByGroupIdAndMessageId(groupId int64, messageId int64) *AhhdEvent {
 	var aahdEvent AhhdEvent
-	err := db.Where("message_id = ?", messageId).First(&aahdEvent).Error
+	err := db.Where("group_id = ? AND message_id = ?", groupId, messageId).First(&aahdEvent).Error
 	if err != nil {
 		log.Print(err)
 		return nil
